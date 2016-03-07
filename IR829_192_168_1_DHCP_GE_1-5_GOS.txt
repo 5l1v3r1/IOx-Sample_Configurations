@@ -1,3 +1,6 @@
+!!WARNING! This is an experimental configuration which does not work
+!at this time.
+
 !When in "enable mode" this command will allow configuration commands
 !to be entered at the terminal, i.e. via a console connection.
 !This here so that this configuration can be copied and pasted into a
@@ -14,8 +17,7 @@ service internal
 hostname IR829-DevTest
 !
 !These credentials are used to authenticate to the Local Manager web
-!application at https://<GOS IP address>:8443. Note that this
-!configuration file, by default, gives the GOS an IP address of 192.168.2.2
+!application at https://<GOS IP address>:8443
 !EDIT ME! Change these credentials.
 !
 username cisco privilege 15 password 0 cisco
@@ -25,10 +27,12 @@ username cisco privilege 15 password 0 cisco
 !
 enable password cisco123
 !
+!This starts the address assigment from .6, so that the addresses .2
+!to .5 can be used for GE5, and possibly GE0.
+!
 ip dhcp excluded-address 192.168.1.1 192.168.1.5
 !
-!This is the DHCP pool. By default addresses will
-!be assigned starting from 192.168.1.2.
+!This is the DHCP pool. See the "excluded-address" entry above. 
 !EDIT ME! If you have this network or addresses already in use in
 !your environment. Also see "interface Vlan2" and ip routes below.
 !         
@@ -51,7 +55,7 @@ interface Vlan2
  no shut
  exit
 !
-!The following are the GE1-4 switch interfaces to which your
+!The following are the GE1-4 switch interfaces to which the
 !development machines will be attached. See Vlan 2 above.
 !
 interface GigabitEthernet1
