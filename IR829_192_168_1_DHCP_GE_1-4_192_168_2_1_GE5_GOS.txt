@@ -3,6 +3,10 @@
 !This here so that this configuration can be copied and pasted into a
 !console window after entering "enable"
 !
+!This configuration defines two networks, 192.168.1.0 and .2.0 with
+!associated DHCP pools. The GE1-4 interfaces get addresses from .1.0
+!network, and the GOS the .2.2 address.
+!
 configure terminal
 !
 !Enable additional debugging (optional, but useful)
