@@ -1,0 +1,156 @@
+!When in "enable mode" this command will allow configuration commands
+!to be entered at the terminal, i.e. via a console connection.
+!This here so that this configuration can be copied and pasted into a
+!console window after entering "enable"
+!
+!This configuration defines two networks, 192.168.1.0 and .2.0 with
+!associated DHCP pools. The GE1 interface get addresses from .1.0
+!network, and the GOS the .2.2 address.
+!
+!Note that these address ranges are being used as they should be
+!private as specified in https://tools.ietf.org/html/rfc1918
+!
+configure terminal
+!
+!Enable additional debugging (optional, but useful)
+!
+service internal
+!
+!Set the hostname. EDIT ME!
+!
+hostname IR809-DevTest
+!
+!These credentials are used to authenticate to the Local Manager web
+!application at https://<GOS IP address>:8443. Note that this
+!configuration file, by default, gives the GOS an IP address of 192.168.2.2
+!EDIT ME! Change these credentials.
+!
+username cisco privilege 15 password 0 cisco
+!
+!Set the enable password.
+!EDIT ME! Change these credentials.
+!
+enable password cisco123
+!         
+!The two exclusion commands below ensure that the only address in the
+!192.168.2.0 DHCP pool will be 192.168.2.2. This means that the GOS,
+!will always have that address from the GuestOS-pool, defined below.
+!
+!EDIT ME! If you need to use a different address range or network for
+!the GOS. For example, if before you do any of this, you can ping
+!192.168.2.2 from your laptop, then there is already something in your
+!environment that uses that address, so you will need to change that
+!here. Also see ip routes below.
+!
+ip dhcp excluded-address 192.168.2.1
+ip dhcp excluded-address 192.168.2.3 192.168.2.254
+!
+!This is the DHCP pool from which the GOS address will be
+!assigned. Because of the "excluded-address" commands above, the GOS
+!will always get 192.168.2.2.
+!
+ip dhcp pool GuestOS-pool
+ network 192.168.2.0 255.255.255.0
+ default-router 192.168.2.1 
+ lease infinite
+ exit
+!
+!This is the DHCP pool for the GE0-1 ports. By default addresses will
+!be assigned starting from 192.168.1.2.
+!EDIT ME! If you have this network or addresses already in use in
+!your environment. Also see "interface Vlan2" and ip routes below.
+!         
+ip dhcp pool Internal-pool
+ network 192.168.1.0 255.255.255.0
+ default-router 192.168.1.1
+ exit
+!
+!These commands configure the bridging behaviour. They are required
+!*before* the "BVI1" interface can be configured below.
+!
+bridge irb
+bridge 1 protocol ieee
+bridge 1 route ip
+!
+!This is a Bridged Virtual Interface (BVI) defined for configuring the GE1-0 ports below.
+!The address of the BVI matches the DHCP Internal-pool defined above.
+!EDIT ME! If you have this network or addresses already in use in
+!your environment. Note that the "description" value is informational
+!only. It should be changed if you change the network number, but has no operational impact.
+!
+!Note that there is some syntactical configuration magic here.
+!BVI1 is the name of the "interface", but what is
+!really going on is a mechanism to create global settings for
+!"bridge-group 1" which is then used to configure GE0-1.
+!
+interface BVI1
+ description Interface to External 192.168.1.x
+ ip address 192.168.1.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly in
+ no shut
+ exit
+!
+!The following is the GE0 interface to which your
+!development machines will be attached. See BVI1 above.
+!
+interface GigabitEthernet0
+ description Interface GE0 to External 192.168.1.x
+ bridge-group 1
+ no ip address
+ no shut
+ exit
+ !
+!The following is the GE1 interface to which your
+!development machines will be attached. See BVI1 above.
+!
+interface GigabitEthernet1
+ description Interface GE1 to External 192.168.1.x
+ bridge-group 1
+ no ip address
+ no shut
+ exit
+!
+!This is the internal GE2 interface to which the GOS is attached.
+!
+interface GigabitEthernet2
+ description Internal Backplane interface to GuestOS
+ ip address 192.168.2.1 255.255.255.0
+ ip nat inside
+ ip virtual-reassembly in
+ duplex auto
+ speed auto
+ ipv6 address autoconfig
+ ipv6 enable
+ no shut
+ exit
+!
+!These route entries map the specific networks to the specific
+!interfaces.
+!EDIT ME! If you have these network or addresses already in use in
+!your environment. Also see "interface Vlan2" and the DHCP pools above.
+ip route 192.168.1.0 255.255.255.0 BVI1
+ip route 192.168.2.0 255.255.255.0 GigabitEthernet2
+!
+!An access control list that permits everything from the
+!192.168.0.0 networks.
+!EDIT ME! If you have these network or addresses already in use in
+!your environment. Also see "interface BVI1" and the DHCP pools
+!above.
+!
+ip access-list standard NAT_ACL
+ permit 192.168.0.0 0.0.255.255
+ exit
+!
+!This command prevents IOS trying to lookup an IP address for
+!something entered at the CLI by accident.
+!
+no ip domain lookup
+!
+end
+
+!The GOS should be started automatically, but in case it is not, this command will do that for you.
+!guest-os 1 start
+!To see which GOSs are running use this command. Until you see an IPV4
+!address assigned to the GOS, it will not be reachable.
+!show iox host list detail
