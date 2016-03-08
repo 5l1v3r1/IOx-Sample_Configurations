@@ -7,6 +7,9 @@
 !associated DHCP pools. The GE1-4 interfaces get addresses from .1.0
 !network, and the GOS the .2.2 address.
 !
+!Note that these address ranges are being used as they should be
+!private as specified in https://tools.ietf.org/html/rfc1918
+!
 configure terminal
 !
 !Enable additional debugging (optional, but useful)
@@ -29,7 +32,7 @@ username cisco privilege 15 password 0 cisco
 !
 enable password cisco123
 !         
-!The two exlusion commands below ensure that the only address in the
+!The two exclusion commands below ensure that the only address in the
 !192.168.2.0 DHCP pool will be 192.168.2.2. This means that the GOS,
 !will always have that address from the GuestOS-pool, defined below.
 !
@@ -67,6 +70,11 @@ ip dhcp pool Internal-pool
 !EDIT ME! If you have this network or addresses already in use in
 !your environment. Note that the "description" value is informational
 !only. It should be changed if you change the network number, but has no operational impact.
+!
+!Note that there is some syntactical configuration magic here.
+Vlan2 is the name of the "interface", but what is
+!really going on is a mechanism to create global settings for
+!"vlan 2" which is then used to configure GE1-4.
 !
 interface Vlan2
  description Interface to External 192.168.1.x
