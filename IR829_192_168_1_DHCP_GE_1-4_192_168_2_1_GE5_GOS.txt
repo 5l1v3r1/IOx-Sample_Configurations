@@ -72,7 +72,7 @@ ip dhcp pool Internal-pool
 !only. It should be changed if you change the network number, but has no operational impact.
 !
 !Note that there is some syntactical configuration magic here.
-Vlan2 is the name of the "interface", but what is
+!Vlan2 is the name of the "interface", but what is
 !really going on is a mechanism to create global settings for
 !"vlan 2" which is then used to configure GE1-4.
 !
