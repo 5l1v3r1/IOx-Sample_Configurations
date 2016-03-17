@@ -10,7 +10,18 @@
 !Note that these address ranges are being used as they should be
 !private as specified in https://tools.ietf.org/html/rfc1918
 !
+!These commands are provided as comments as they are often required
+!in development as new images are provided.
+!
+!bundle install flash:/ir800-universalk9-bundle.SPA.156-1.T1.bin
+!guest-os 1 image install flash:/ir800-ioxvm-1.0.0.4-T.bin verify
+!
 configure terminal
+!
+!See install commands above. If new images are installed, then the
+!boot image will typically need to be updated also.
+!
+!boot system flash:/ir800-universalk9-mz.SPA.156-1.T1
 !
 !Enable additional debugging (optional, but useful)
 !
