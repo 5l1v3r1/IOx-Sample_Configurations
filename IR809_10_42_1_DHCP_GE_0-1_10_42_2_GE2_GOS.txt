@@ -25,10 +25,12 @@ guest-os 1 image uninstall
 bundle install flash:/ir800-universalk9-bundle.SPA.156-1.T1.bin
 guest-os 1 image install flash:/ir800-ioxvm-1.0.0.4-T.bin verify
 !
+configure terminal
+!
 !See install commands above. If new images are installed, then the
 !boot image will typically need to be updated also.
 !
-!boot system flash:/ir800-universalk9-mz.SPA.156-1.T1
+boot system flash:/ir800-universalk9-mz.SPA.156-1.T1
 !
 !Enable additional debugging (optional, but useful)
 !
