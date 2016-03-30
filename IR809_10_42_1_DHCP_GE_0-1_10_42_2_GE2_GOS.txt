@@ -1,24 +1,29 @@
-!When in "enable mode" this command will allow configuration commands
-!to be entered at the terminal, i.e. via a console connection.
-!This here so that this configuration can be copied and pasted into a
-!console window after entering "enable"
-!
 !This configuration defines two networks, 10.42.1.0 and 10.42.2.0 with
-!associated DHCP pools. The GE1-4 interfaces get addresses from the 10.41
+!associated DHCP pools. The GE1-4 interfaces get addresses from the 10.42.1
 !network, and the GOS the 10.42.2.2 address.
+!
+!To ensure that these networks are reachable from your laptop, you may
+!need to use this command, in OS X, to set up a route:
+!
+!sudo route -n add -net 10.42.0.0/16  10.42.1.1
+!
+!In Linux the format is:
+!
+!sudo route add -net 10.42.0.0 netmask 255.255.0.0  gw 10.42.1.1
 !
 !Note that these address ranges are being used as they should be
 !private as specified in https://tools.ietf.org/html/rfc1918. My 
 !network is 10.41.136.0, so I know that 10.42 is available
 !in my environment. Similar considerations may apply for you.
 !
-!These commands are provided as comments as they are often required
-!in development as new images are provided.
+!These install commands are provided as comments as they are often required
+!in development as new images are provided. Note that the images
+!referred to have to be in the flash memory.
 !
-!bundle install flash:/ir800-universalk9-bundle.SPA.156-1.T1.bin
-!guest-os 1 image install flash:/ir800-ioxvm-1.0.0.4-T.bin verify
-!
-configure terminal
+guest-os 1 stop
+guest-os 1 image uninstall
+bundle install flash:/ir800-universalk9-bundle.SPA.156-1.T1.bin
+guest-os 1 image install flash:/ir800-ioxvm-1.0.0.4-T.bin verify
 !
 !See install commands above. If new images are installed, then the
 !boot image will typically need to be updated also.
@@ -31,7 +36,7 @@ service internal
 !
 !Set the hostname. EDIT ME!
 !
-hostname IR829-DevTest
+hostname IR809-DevTest
 !
 !These credentials are used to authenticate to the Local Manager web
 !application at https://<GOS IP address>:8443. Note that this
@@ -56,7 +61,7 @@ enable password cisco123
 !here. Also see ip routes below.
 !
 ip dhcp excluded-address 10.42.2.1
-ip dhcp excluded-address 10.42.2.3 10.42.0.254
+ip dhcp excluded-address 10.42.2.3 10.42.2.254
 !
 !This is the DHCP pool from which the GOS address will be
 !assigned. Because of the "excluded-address" commands above, the GOS
@@ -68,28 +73,35 @@ ip dhcp pool GuestOS-pool
  lease infinite
  exit
 !
-!This is the DHCP pool for the GE1-4 ports. By default addresses will
+!This is the DHCP pool for the GE0-1 ports. By default addresses will
 !be assigned starting from 10.42.1.2.
 !EDIT ME! If you have this network or addresses already in use in
-!your environment. Also see "interface Vlan2" and ip routes below.
+!your environment. Also see "interface BVI1" and ip routes below.
 !         
 ip dhcp pool Internal-pool
  network 10.42.1.0 255.255.255.0
  default-router 10.42.1.1
  exit
 !
-!This is a VLAN defined for configuring the GE1-4 switch ports below.
-!The address of the VLAN matches the DHCP Internal-pool defined above.
+!These commands configure the bridging behaviour. They are required
+!*before* the "BVI1" interface can be configured below.
+!
+bridge irb
+bridge 1 protocol ieee
+bridge 1 route ip
+!
+!This is a Bridged Virtual Interface (BVI) defined for configuring the GE1-0 ports below.
+!The address of the BVI matches the DHCP Internal-pool defined above.
 !EDIT ME! If you have this network or addresses already in use in
 !your environment. Note that the "description" value is informational
 !only. It should be changed if you change the network number, but has no operational impact.
 !
 !Note that there is some syntactical configuration magic here.
-!Vlan2 is the name of the "interface", but what is
+!BVI1 is the name of the "interface", but what is
 !really going on is a mechanism to create global settings for
-!"vlan 2" which is then used to configure GE1-4.
+!"bridge-group 1" which is then used to configure GE0-1.
 !
-interface Vlan2
+interface BVI1
  description Interface to External 10.42.1.x
  ip address 10.42.1.1 255.255.255.0
  ip nat inside
@@ -97,39 +109,29 @@ interface Vlan2
  no shut
  exit
 !
-!The following are the GE1-4 switch interfaces to which your
-!development machines will be attached. See Vlan 2 above.
+!The following is the GE0 interface to which your
+!development machines will be attached. See BVI1 above.
+!
+interface GigabitEthernet0
+ description Interface GE0 to External 10.42.1.x
+ bridge-group 1
+ no ip address
+ no shut
+ exit
+ !
+!The following is the GE1 interface to which your
+!development machines will be attached. See BVI1 above.
 !
 interface GigabitEthernet1
  description Interface GE1 to External 10.42.1.x
- switchport access vlan 2
+ bridge-group 1
  no ip address
  no shut
  exit
-!         
+!
+!This is the internal GE2 interface to which the GOS is attached.
+!
 interface GigabitEthernet2
- description Interface GE2 to External 10.42.1.x
- switchport access vlan 2
- no ip address
- exit
-!         
-interface GigabitEthernet3
- description Interface GE3 to External 10.42.1.x
- switchport access vlan 2
- no ip address
- no shut
- exit
-!         
-interface GigabitEthernet4
- description Interface GE4 to External 10.42.1.x
- switchport access vlan 2
- no ip address
- no shut
- exit
-!
-!This is the internal GE5 interface to which the GOS is attached.
-!
-interface GigabitEthernet5
  description Internal Backplane interface to GuestOS
  ip address 10.42.2.1 255.255.255.0
  ip nat inside
@@ -145,13 +147,13 @@ interface GigabitEthernet5
 !interfaces.
 !EDIT ME! If you have these network or addresses already in use in
 !your environment. Also see "interface Vlan2" and the DHCP pools above.
-ip route 10.42.1.0 255.255.255.0 Vlan2
-ip route 10.42.2.0 255.255.255.0 GigabitEthernet5
+ip route 10.42.1.0 255.255.255.0 BVI1
+ip route 10.42.2.0 255.255.255.0 GigabitEthernet2
 !
-!Access control lists that permits everything from the
+!An access control list that permits everything from the
 !10.42.0.0 networks.
 !EDIT ME! If you have these network or addresses already in use in
-!your environment. Also see "interface Vlan2" and the DHCP pools
+!your environment. Also see "interface BVI1" and the DHCP pools
 !above.
 !
 ip access-list standard NAT_ACL
@@ -166,8 +168,8 @@ no ip domain lookup
 end
 write memory
 
-!The GOS should be started automatically, but in case it is not, this command will do that for you.
-!guest-os 1 start
+!This command will start the GOS.
+guest-os 1 start
 !To see which GOSs are running use this command. Until you see an IPV4
 !address assigned to the GOS, it will not be reachable.
-!show iox host list detail
+show iox host list detail

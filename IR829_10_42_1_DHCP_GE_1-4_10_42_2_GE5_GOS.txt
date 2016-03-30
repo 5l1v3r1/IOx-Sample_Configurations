@@ -4,19 +4,31 @@
 !console window after entering "enable"
 !
 !This configuration defines two networks, 10.42.1.0 and 10.42.2.0 with
-!associated DHCP pools. The GE1-4 interfaces get addresses from the 10.41
+!associated DHCP pools. The GE1-4 interfaces get addresses from the 10.42.1
 !network, and the GOS the 10.42.2.2 address.
+!
+!To ensure that these networks are reachable from your laptop, you may
+!need to use this command, in OS X, to set up a route:
+!
+!sudo route -n add -net 10.42.0.0/16  10.42.1.1
+!
+!In Linux the format is:
+!
+!sudo route add -net 10.42.0.0 netmask 255.255.0.0  gw 10.42.1.1
 !
 !Note that these address ranges are being used as they should be
 !private as specified in https://tools.ietf.org/html/rfc1918. My 
 !network is 10.41.136.0, so I know that 10.42 is available
 !in my environment. Similar considerations may apply for you.
 !
-!These commands are provided as comments as they are often required
-!in development as new images are provided.
+!These install commands are provided as comments as they are often required
+!in development as new images are provided.  Note that the images
+!referred to have to be in the flash memory.
 !
-!bundle install flash:/ir800-universalk9-bundle.SPA.156-1.T1.bin
-!guest-os 1 image install flash:/ir800-ioxvm-1.0.0.4-T.bin verify
+guest-os 1 stop
+guest-os 1 image uninstall
+bundle install flash:/ir800-universalk9-bundle.SPA.156-1.T1.bin
+guest-os 1 image install flash:/ir800-ioxvm-1.0.0.4-T.bin verify
 !
 configure terminal
 !
@@ -56,7 +68,7 @@ enable password cisco123
 !here. Also see ip routes below.
 !
 ip dhcp excluded-address 10.42.2.1
-ip dhcp excluded-address 10.42.2.3 10.42.0.254
+ip dhcp excluded-address 10.42.2.3 10.42.2.254
 !
 !This is the DHCP pool from which the GOS address will be
 !assigned. Because of the "excluded-address" commands above, the GOS
@@ -166,8 +178,8 @@ no ip domain lookup
 end
 write memory
 
-!The GOS should be started automatically, but in case it is not, this command will do that for you.
-!guest-os 1 start
+!This command will start the GOS.
+guest-os 1 start
 !To see which GOSs are running use this command. Until you see an IPV4
 !address assigned to the GOS, it will not be reachable.
-!show iox host list detail
+show iox host list detail
