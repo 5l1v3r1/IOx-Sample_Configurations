@@ -1,1 +1,3 @@
-Deprecated. See [here](https://github.com/DevOps4Networks/IOx-Sample_Configurations/blob/master/IR829_10_42_1_DHCP_GE_1-4_10_42_2_GE5_GOS.txt)
+Deprecated. See:
+
+https://github.com/DevOps4Networks/IOx-Sample_Configurations/blob/master/IR829_10_42_1_DHCP_GE_1-4_10_42_2_GE5_GOS.txt
