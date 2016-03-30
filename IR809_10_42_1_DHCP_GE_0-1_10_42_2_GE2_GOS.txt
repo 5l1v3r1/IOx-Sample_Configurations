@@ -1,6 +1,6 @@
 !This configuration defines two networks, 10.42.1.0 and 10.42.2.0 with
-!associated DHCP pools. The GE1-4 interfaces get addresses from the 10.42.1
-!network, and the GOS the 10.42.2.2 address.
+!associated DHCP pools. The GE0-1 interfaces get addresses from the 10.42.1
+!network, and the GE2 and GOS the 10.42.2.2 address.
 !
 !To ensure that these networks are reachable from your laptop, you may
 !need to use this command, in OS X, to set up a route:
